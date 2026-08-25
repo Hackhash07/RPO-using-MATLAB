@@ -1,0 +1,156 @@
+ 
+%here we give real stocks closing price data from
+%21staug2025-21aug2026input and calculate optimal weights for given kappa
+%values.
+stock_1_closeprice = flipud(USD_INRHistoricalData.Price);
+stock_1_dates = flipud(USD_INRHistoricalData.Date);
+
+stock_2_closeprice = flipud(S_P500HistoricalData_1_.Price);
+stock_2_dates = flipud(S_P500HistoricalData_1_.Date);
+
+stock_3_closeprice = flipud(Nasdaq100HistoricalData.Price);
+stock_3_dates = flipud(Nasdaq100HistoricalData.Date);
+
+n = min([length(stock_1_closeprice), length(stock_2_closeprice), length(stock_3_closeprice)]);
+ 
+
+stock_1_returns=zeros(n-1,1);
+stock_2_returns=zeros(n-1,1);
+stock_3_returns = zeros(n-1, 1);
+
+for i=2:n
+    stock_1_returns(i-1)=(stock_1_closeprice(i)-stock_1_closeprice(i-1))/stock_1_closeprice(i-1);
+end
+for i=2:n
+    stock_2_returns(i-1)=(stock_2_closeprice(i)-stock_2_closeprice(i-1))/stock_2_closeprice(i-1);
+end
+for i=2:n
+    stock_3_returns(i-1)=(stock_3_closeprice(i)-stock_3_closeprice(i-1))/stock_3_closeprice(i-1);
+end
+% Calculate the mean and standard deviation of the swireturns
+stock_1_Return = mean(stock_1_returns);
+stock_1_STD = std(stock_1_returns);
+
+stock_2_Return = mean(stock_2_returns);
+stock_2_STD = std(stock_2_returns);
+
+stock_3_Return = mean(stock_3_returns);
+stock_3_STD = std(stock_3_returns);
+
+n=3;
+mu = zeros(n,1);
+sigma = zeros(n,n);
+mu(1,1)=stock_1_Return;
+mu(2,1)=stock_2_Return;
+mu(3,1) = stock_3_Return;
+sigma  = cov([stock_1_returns, stock_2_returns, stock_3_returns]);
+
+
+
+omega = diag(diag(sigma));
+
+lam = 1;
+checks=10;
+
+
+returnsrealized=zeros(length(kapps),1);
+
+riskrealized=zeros(length(kapps),1);
+
+sharperealized=zeros(length(kapps),1);
+
+w_opt=zeros(n,length(kapps));
+
+vol = sqrt(diag(sigma));  
+
+SR  = mu ./ vol;
+
+kapp= 0;
+        cvx_begin
+
+    variable w(n)
+
+    maximize( ...
+        mu' * w ...
+        - (kapp) * norm(sqrt(diag(omega)) .* w, 2) ...
+        - (lam/2) * (w' * sigma * w) ...
+        )
+
+    subject to
+    sum(w)<=1;
+    w >= 0;
+
+
+    cvx_end
+
+    returnsrealized = mu' * w;% Store the realized return for kapp
+    riskrealized=w'*sigma*w;
+    sharperealized=returnsrealized(idx)/sqrt(riskrealized(idx));
+    
+        w_opt=w;
+    
+
+
+
+
+[V, D] = eig(sigma);
+
+eigenvalues = diag(D);      % extract eigenvalues from diagonal matrix D
+
+disp('Eigenvalues & Eigenvectors')
+for i = 1:length(eigenvalues)
+    fprintf('\nEigenvalue %d = %.6f\n', i, eigenvalues(i));
+    fprintf('Corresponding eigenvector:\n');
+    disp(V(:,i));
+end
+disp('optimal weights:')
+disp(w_opt)
+P = corrcoef([stock_1_returns, stock_2_returns, stock_3_returns]);
+
+[Z,L] = eig(P);
+
+
+              
+disp(' Sharpe Ratios ')
+disp(SR)
+
+
+x = zeros(n,1);      
+
+d=diag(sigma);
+for i=1:n
+    x(i,1)=d(i,1)*w_opt(i);
+end
+
+
+if norm(x) > 1e-12
+    SR_rob = SR - kapp * x / norm(x);
+else
+    SR_rob = SR;
+end
+
+disp('Original Sharpe projections:')
+for i = 1:n
+    fprintf('Direction %d: %.10f\n', ...
+        i, Z(:,i)' * SR);
+end
+
+disp('Robust Sharpe projections:')
+for i = 1:n
+    fprintf('Direction %d: %.10f\n', ...
+        i, Z(:,i)' * SR_rob);
+end
+figure;
+
+scatter3(stock_1_returns, ...
+    stock_2_returns, ...
+    stock_3_returns, ...
+    25, 'filled');
+
+xlabel('USD/INR Return');
+ylabel('S&P 500 Return');
+zlabel('NASDAQ 100 Return');
+
+title('3-Asset Return Space');
+
+grid on;

@@ -1,0 +1,131 @@
+#include <iostream>
+#include <vector>
+using namespace std;
+
+vector<float> w;
+vector<float> weights;
+float maxsum = -999999;
+
+float totalsum(vector<float> w, vector<float> mu, vector<vector<float>> covmat, float lamda)
+{
+    int n = w.size();
+
+    float term_1 = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+        term_1 += w[i] * mu[i];
+    }
+
+    vector<float> matrx_1(n, 0);
+
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            matrx_1[i] += w[j] * covmat[i][j];
+        }
+    }
+
+    float term_2 = 0;
+
+    for (int i = 0; i < n; i++)
+    {
+        term_2 += w[i] * matrx_1[i];
+    }
+
+    float totterm = term_1 - lamda * term_2;
+
+    return totterm;
+}
+
+void optimum_weights(
+    int n,
+    vector<float> mu,
+    vector<vector<float>> covmat,
+    float lamda,
+    float remainportion,
+    int i)
+{
+    if (i != n - 1)
+    {
+        for (float j = 0; j <= remainportion; j += 0.001)
+        {
+            w[i] = j;
+
+            optimum_weights(
+                n,
+                mu,
+                covmat,
+                lamda,
+                remainportion - j,
+                i + 1);
+        }
+    }
+    else
+    {
+        w[i] = remainportion;
+
+        float sum = totalsum(w, mu, covmat, lamda);
+
+        if (sum > maxsum)
+        {
+            maxsum = sum;
+
+            for (int k = 0; k < n; k++)
+            {
+                weights[k] = w[k];
+            }
+        }
+    }
+}
+
+int main()
+{
+    int n;
+    cin >> n;
+
+    w.resize(n);
+    weights.resize(n);
+
+    vector<float> u(n);
+    vector<vector<float>> covmat(n, vector<float>(n));
+
+    float lamda = 0.5;
+
+    for (int i = 0; i < n; i++)
+    {
+        covmat[i][i] = 1;
+    }
+
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            if (i != j)
+            {
+                covmat[i][j] = 0.4;
+            }
+        }
+    }
+
+    for (int i = 0; i < n; i++)
+    {
+        u[i] = (i * i) + 25 - 10 * i;
+    }
+
+    optimum_weights(n, u, covmat, lamda, 1, 0);
+
+    cout << "The optimal weights are: ";
+
+    for (int i = 0; i < n; i++)
+    {
+        cout << weights[i] << " ";
+    }
+
+    cout << endl;
+
+    cout << "Maximum total sum is: " << maxsum << endl;
+
+    return 0;
+}

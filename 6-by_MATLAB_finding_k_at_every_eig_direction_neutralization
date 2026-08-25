@@ -1,0 +1,148 @@
+ 
+%here we give real stocks closing price data from
+%21staug2025-21aug2026input and calculate optimal weights for given kappa
+%values.
+%herewe plot the cumretuns on  eigendirections as k varies
+%we try to plot retruns on eigen direction sr for n=3,4.But before that
+%lets make dynamic inclusion of new stock
+n=5
+p1 = flipud(USD_INRHistoricalData.Price);
+p2 = flipud(S_P500HistoricalData_1_.Price);
+p3 = flipud(Nasdaq100HistoricalData.Price);
+p4 = flipud(DowJonesIndustrialAverageHistoricalData.Price);
+p5 = flipud(DAXHistoricalData.Price);
+
+
+datalen = min([length(p1), length(p2), length(p3), length(p4),length(p5)]);
+
+stock_closeprices = [ ...
+    p1(1:datalen), ...
+    p2(1:datalen), ...
+    p3(1:datalen), ...
+    p4(1:datalen),...
+    p5(1:datalen)];
+
+
+stock_returns=zeros(datalen-1,n);
+
+for i=1:n
+    for j=2:datalen
+        stock_returns(j-1,i)=(stock_closeprices(j,i)-stock_closeprices(j-1,i))/stock_closeprices(j-1,i);
+    end
+end
+
+mu=zeros(n,1);
+
+for i=1:n
+    mu(i)=mean(stock_returns(:,i));
+end
+
+sigma = cov(stock_returns);
+
+
+
+ret1 = stock_returns(:,1);
+ret2 = stock_returns(:,2);
+ret3 = stock_returns(:,3);
+ret4 = stock_returns(:,4);
+ret5 = stock_returns(:,5);
+ 
+
+
+
+
+
+omega = diag(diag(sigma));
+
+lam = 1;
+checks=10;
+
+
+returnsrealized=zeros(checks*n+1,1);
+
+riskrealized=zeros(checks*n+1,1);
+
+sharperealized=zeros(checks*n+1,1);
+
+w_opt=zeros(n,checks*n+1);
+
+vol = sqrt(diag(sigma));  
+
+SR  = mu ./ vol;
+sr_yaxis=zeros(checks*n+1,1);
+x_axis=zeros(checks*n+1,1);
+for int=0:(checks*n)
+    kapp=0;
+        cvx_begin
+    kapp=kapp+(int*(1/100));
+    variable w(n)
+
+    maximize( ...
+        mu' * w ...
+        - (kapp) * norm(sqrt(diag(omega)) .* w, 2) ...
+        - (lam/2) * (w' * sigma * w) ...
+        )
+
+    subject to
+    sum(w)==1;
+    w >= 0;
+
+
+    cvx_end
+
+    x = zeros(n,1);   
+    d=diag(sigma);
+    for i=1:n
+        x(i,1)=sqrt(d(i,1))*w(i);
+    end
+
+
+
+
+
+
+
+
+    returnsrealized(int+1) = mu' * w;% Store the realized return for kapp
+    riskrealized(int+1)=sqrt(w'*sigma*w);
+    sharperealized(int+1)=returnsrealized(int+1)/(riskrealized(int+1));
+    x_axis(int+1,1)=kapp;
+    
+
+    if norm(x) > 1e-12
+        SR_rob = SR - kapp * x / norm(x);
+    else
+        SR_rob = SR;
+    end
+    sr_yaxis(int+1,1)=sqrt(SR_rob'*SR_rob);
+    [Z,~] = eig(sigma);  % ensure Z is n-by-n eigenvector matrix
+
+    fprintf('Original Sharpe projections:for k=%.10f\n',kapp);
+    for i = 1:n
+        fprintf('Direction %d: %.10f\n', ...
+            i, Z(:,i)' * SR);
+    end
+
+    fprintf('Robust Sharpe projections:for k=%.10f\n',kapp);
+    for i = 1:n
+        fprintf('Direction %d: %.10f\n', ...
+            i, Z(:,i)' * SR_rob);
+    end
+    
+
+    for j=1:n
+        w_opt(j,int+1)=w(j);
+    end
+    if kapp>sqrt(SR'*SR)
+        break;
+    end
+    
+end
+disp('optimal weights:')
+disp(w_opt)
+disp('')
+
+
+
+
+

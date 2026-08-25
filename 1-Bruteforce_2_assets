@@ -1,0 +1,76 @@
+#include <iostream>
+using namespace std;
+
+float totalsum(float w[2], float mu[2], float covmat[2][2], float lamda)
+{
+    float term_1 = 0;
+    for (int i = 0; i < 2; i++)
+    {
+        term_1 += w[i] * mu[i];
+    }
+
+    float matrx_1[1][2];
+
+    for (int i = 0; i < 2; i++)
+    {
+        matrx_1[0][i] = w[0] * covmat[i][0] + w[1] * covmat[i][1];
+    }
+    float term_2 = 0;
+    for (int i = 0; i < 2; i++)
+    {
+
+        term_2 += w[i] * matrx_1[0][i];
+    }
+    float totterm = term_1 - lamda * term_2;
+    return totterm;
+}
+
+int main()
+{
+    float w_1;
+    float w_2;
+    float mu_1;
+    float mu_2;
+    float var_1;
+    float var_2;
+    float cov_12;
+    float lamda;
+
+    mu_1 = 1;
+    mu_2 = 2;
+    lamda = 0.5;
+    var_1 = 1;
+    var_2 = 1;
+    cov_12 = 0.4;
+    float covmat[2][2];
+    covmat[0][0] = var_1;
+    covmat[0][1] = cov_12;
+    covmat[1][0] = cov_12;
+    covmat[1][1] = var_2;
+    float w[2];
+
+    float mu[2];
+    mu[0] = mu_1;
+    mu[1] = mu_2;
+    float totterm = 0;
+    float weight_1;
+    float weight_2;
+    float ans;
+    for (float i = 0; i <= 1; i += 0.0001)
+    {
+        w_1 = i;
+        w_2 = 1 - i;
+        w[0] = w_1;
+        w[1] = w_2;
+        ans = totalsum(w, mu, covmat, lamda);
+        if (totterm < ans)
+        {
+            totterm = ans;
+            weight_1 = i;
+            weight_2 = 1 - i;
+        }
+    }
+    cout << "The optimal weights are: " << weight_1 << " and " << weight_2 << endl;
+    cout << "The maximum total sum is: " << totterm << endl;
+    return 0;
+}
