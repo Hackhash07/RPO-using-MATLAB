@@ -40,4 +40,50 @@ Now i am going to do tasks as mention below in order :
 
 1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1-1.
 
+A PORTFOLIO MANAGER TASK IS TO MANAGE WEALTH OF THE CLIENT 
+
+LET US SAY I START WITH WEALTH (W) AND I WANTED TO MANAGE WEALTH THEN MY ONLY ONLY AIM WOULD BE :
+
+(1)GET MAXIMUM PROFIT POSSIBLE.
+
+
+But in market there no such thing as you invest money and get profit without any risk if you get then that is infaltion -if u think like u gained money without risk then u are cooked like many indians comparing themselves to their parents who earned less in numbers and thinking they got better.
+
+ so we need to take a level of risk for a respective level of profit that we need to get .
+
+
+
+ so  (1) evolved into -get maximum wealth  and realize less losses or negative deviations from expected.
+
+ so my objective would be :
+
+ max(E(wealth)-LPM(target wealth -real wealth ) which is equivalent to (min(-E(returns)+LPM(target wealth -real wealth))->matimatically solvable with CVX in MATLAB.
+
+ Our wealth evolves based on OUr decison based on expectation  and the error of our expectation form the true value
+
+ so let W=g(x,ξe)
+ x- decision vector x ∈ X ⊆ Rn
+ random vector ξe ∈ Rm where Denote
+the joint distribution function of ξe by F  and F is only known to belong to an uncertainty set.
+
+if target is a .
+
+the the objective function becomes 
+
+objective=min(-E(g(x,ξe)+(risk aversion constant)(LPM(a-g(x,ξe))).
+
+with some stochastic constraint let the stochastic constraint be G(x,ξe)>=0.
+
+so we need to obtain a desicion vector such that it staisfies objective function and under constaint
+
+but all x cannot satisfy the constaint  for all values of ξe so we will find and  x which satisfies the objective function for ξe which lies in an uncertainity set(ξ ∈ UΩ)  such that P{(G(x,ξ))≥0}>func(Ω),
+we would like if fun(Ω) nearly equal to 1.
+
+
+NOW TASK IS TO FIND AND UNCERTAINITY SET WHICH IS NOT TOO CONSERVATIVE LIKE IT IN   A practical guide to robust portfolio optimization paper which assumes P(+ ve dviations)=P(-ve deviations).
+
+the uncertainity set should be decided by the the retuns distrubution of the set by treating + ve deviations and -ve deviations sepaerately 
+
+NOTE :seperately above is not differently.
+
 
